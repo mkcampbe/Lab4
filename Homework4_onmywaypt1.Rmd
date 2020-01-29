@@ -1,0 +1,262 @@
+---
+title: "Homework 4"
+author: "Mary Kate Campbell"
+date: "1/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "~/Documents/UMBio201/Lab4/")
+```
+
+# Load packages
+```{r Load packages, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(tidyverse)
+library(readxl)
+library(broom)
+library(cowplot)
+set.seed(7)
+```
+
+# Question 1
+[ 5 points total ]
+
+Complete the writing assignment assigned in lecture on January 24th. Upload to Canvas as Word document.
+
+
+# Question 2
+[ 5 points total ]
+
+### Import 
+Use `HW4_Q2_data.txt` file to determine if there was a change in propionate concentrations for participants who consumed BRMPS 2xdaily. Remember to subset the data frame for quality and relevant measurements, and check all assumptions. Create a plot of the data used, save the final data frame and plot. Answer any questions listed below.
+```{r}
+prop_df <- read_delim(file = "raw_data/HW4_Q2_data.txt", 
+                      delim = "\t", escape_double = FALSE, 
+                      trim_ws = TRUE, na=c("NA"),
+                      col_names = TRUE,
+                      col_types = cols(participant_id = col_character(),
+                                      study_week = col_character(),
+                                      semester = col_character(),
+                                      supplement_consumed = col_character(),
+                                      quantity_compliant = col_character(),
+                                      frequency = col_character(),
+                                      acetate_mean = col_double(),
+                                      butyrate_mean = col_double(),
+                                      propionate_mean = col_double())
+                      )
+
+new_prop <- prop_df %>% 
+   select(-starts_with("acetate"), 
+         -starts_with("butyrate")
+         ) %>%
+filter(frequency == "2xdaily", study_week == "week1" | study_week == "week3", supplement_consumed == "BRMPS", quantity_compliant == "yes", semester != "Winter2015")
+  
+
+dim(new_prop)
+```
+
+What are the dimensions of the data frame?
+The dimensions of the data frame are 196 rows by 7 columns 
+
+### Propionate plot 
+```{r}
+propionate_plot <- new_prop %>% 
+  ggplot(aes(x = study_week, 
+             y = propionate_mean, 
+             color = study_week), 
+         frequency) + 
+  geom_violin() + geom_jitter() + 
+  facet_grid(~frequency) + 
+  xlab(NULL) + 
+  ylab("Propionate (mmol/kg)") + 
+  theme(legend.position = "none")# propionate plot
+```
+
+Is there a visual difference in propionate concentrations?
+The propionate concentrations of individuals who took BRMPS 2x daily during week one have much less variation than the propionate concentrations of individuals who took BRMPS 2x daily during week 3. However when looking at both violin plots, most of the propionate concentrations for week one and week three are about the same because they are widest at around the same value of 10 mmol/kg. 
+
+### Statistical test 
+Check assumptions; were any of the assumptions violated? Based on this, which test will you use?
+```{r}
+
+prop_wk1_2x <- new_prop %>%
+  filter(study_week == "week1") %>% 
+         rename(prop_mean_wk1 = propionate_mean) %>% 
+  select(-study_week)
+
+prop_wk3_2x <- new_prop %>% 
+  filter(study_week == "week3") %>% 
+  rename(prop_mean_wk3 = propionate_mean) %>% 
+  select(-study_week)
+  
+q2_prop_df2 <- inner_join(prop_wk1_2x, prop_wk3_2x) %>% 
+  drop_na()
+  
+#sample size check 
+q2_prop_df2 %>% 
+  group_by(supplement_consumed) %>% #set groups to what we are comparing
+  summarise(sample_size = n()) #use summarise() and n() to get counts of ppl in each group
+
+#normality check 
+  shapiro.test(q2_prop_df2$prop_mean_wk1) 
+  ggplot(q2_prop_df2, aes(x = prop_mean_wk1)) + geom_histogram()
+  
+  shapiro.test(q2_prop_df2$prop_mean_wk3)
+  ggplot(q2_prop_df2, aes(x = prop_mean_wk3)) + geom_histogram()
+```
+Our p-value for the shapiro test run on the week one propionate concentrations of 0.284 is greater than our significance level of 0.05, we can assume normality. However, our p-value for the shapiro test run on week three propionate concentrations of 1.756e-06 suggests that our data does not follow a normal distribution. Therefore, we must check to see if it deviates from the normal with a histogram. 
+
+```{r}
+ggplot(q2_prop_df2, aes(x=prop_mean_wk3)) +
+  geom_histogram() 
+qqnorm(q2_prop_df2$prop_mean_wk3); qqline(q2_prop_df2$prop_mean_wk3)
+```
+The histogram shows a rough bell curve, and the qqplot does not show a lot of deviation from the line; in combination with our large sample size of 63 we are okay with proceeding with a t-test.
+
+```{r}
+#equal variances check 
+var.test(x = q2_prop_df2$prop_mean_wk1, 
+         y = q2_prop_df2$prop_mean_wk3, 
+         alternative = "two.sided")
+```
+our p-value for our equal variances test was less than our significance level of 0.05 so we will account for this in our t-test. 
+
+What hypotheses are being tested?
+
+our null hypothesis: there is no difference between week 1 and week 3 average propionate concentrations of those who took BRMPS twice daily. 
+
+our alternative hypothesis: there is a higher average concentration of propionate in week three compared to average concentration of propionate in week one in students that took BRMPS twice daily. 
+
+```{r}
+# conduct statistical test
+t.test(x = q2_prop_df2$prop_mean_wk1, 
+       y = q2_prop_df2$prop_mean_wk3, 
+       var.equal = FALSE, #we set this to true based on the result of var.test() above 
+       paired = TRUE, #this must be TRUE because the samples are NOT independent 
+       alternative = "less") 
+# here the alternative argument indicates we expect the group in the x argument (week1) to be different than y (week3)
+# What was the p-value of the test? 
+```
+
+### Conclusions 
+
+What are your conclusions; do you accept or reject the null hypothesis?  
+
+since our p-value of 0.1697 is greater than our significance level of 0.05, we fail to reject the null hypothesis that there is no difference between week 1 and week 3 average propionate concentrations of those who took BMPS daily. There is not enough evidence to suggest that the average concentration of propionate in week 3 is greater than the average concentration in week 1 for students that took BRMPS 2x daily.  
+
+
+Similar analyses for acetate and butyrate were conducted during Lab 3 and HW 3. Consider the figures and results of those analyses in addition to the analysis for propionate just conducted above. Based on the results for each of these short chain fatty acids (SCFAs) was there more microbial fermentation occuring when participants consumed potato starch (BRMPS) twice a day? Explain your answer using the figures and statistical tests as evidence. 
+
+ 
+
+### Save results 
+```{r}
+write_delim(q2_prop_df2, path = "propionate_data.txt", delim = "\t")# save final data frame
+save_plot(propionate_plot, 
+          nrow = 1 , ncol = 1, 
+          filename = "propionate_plot.pdf") # save plot
+```
+
+
+# Question 3
+[ 5 points total ]
+
+### Import 
+Import the `HW4_Q3_data.txt` data file, and name the resulting data frame `q3_df`.
+```{r}
+q3_df <- read_delim(file = "raw_data/HW4_Q3_data.txt", 
+                      delim = "\t", escape_double = FALSE, 
+                      trim_ws = TRUE, na=c("NA"),
+                      col_names = TRUE,
+                      col_types = cols(participant_id = col_character(),
+                                      sample_number = col_character(),
+                                      sample_id = col_character(),
+                                      study_week = col_character(),
+                                      semester = col_character(),
+                                      use_data = col_character(),
+                                      quantity_compliant = col_character(),
+                                      frequency = col_character(),
+                                      supplement_consumed = col_character(),
+                                      sample_weight_g = col_double(),
+                                      acetate_mM = col_double(),
+                                      butyrate_mM = col_double(),
+                                      propionate_mM = col_double(),
+                                      scfa_notes = col_character(),
+                                      pH = col_double(),
+                                      bristol_score = col_character()
+                                    ))
+
+```
+
+### Filter
+Filter for supplement compliance, and participants who consumed potato starches (BRMPS or LOODAT). Name the resulting data frame q3_filtered. Write the dimensions of this data frame in a comment below. 
+```{r}
+q3_filtered <- q3_df %>% 
+  filter(quantity_compliant == "yes", supplement_consumed == "BRMPS" | supplement_consumed == "LOODAT", semester != "Winter2015") 
+dim(q3_filtered) #729 rows by 16 columns 
+
+q3_1 <- q3_filtered %>% 
+  drop_na(acetate_mM, butyrate_mM, propionate_mM, scfa_notes, pH, bristol_score) %>% 
+filter(study_week == "week1" | study_week == "week3") 
+```
+
+### Mutate
+Use one of the accessor functions from Lab 2 to identify the type (character, double, numeric, etc.) of each column. If necessary use the mutate function to convert Bristol score (BSS) to numeric. Use the group_by and summarise functions determine the average weekly BSS for each participant. Make sure the semester and supplement consumed columns are not dropped. Name this final data frame q3_avg. 
+```{r}
+q3_new <- q3_1 %>%  
+  mutate(bristol_score = as.numeric(bristol_score))
+
+is.numeric(q3_new$bristol_score) #to check to see if its numeric 
+
+bristol_avg_df <- q3_new %>% 
+  group_by(study_week, participant_id, semester, supplement_consumed) %>% 
+  summarise(bristol_avg = mean(bristol_score)) %>% 
+  ungroup()
+
+```
+
+### Bristol plot
+Plot the week 1 and week 3 average bristol scores as a jitter plot over top of a violin plot. Modify the arguments to geom_jitter to change the following: color the jitter points based on type of potato starch, change the shape of the jitter points by type of strach, reduce the width of the jitter points so they are concentrated over the violins. 
+
+See this website for color options: http://sape.inf.usi.ch/quick-reference/ggplot2/colour 
+And this site for shape options: http://sape.inf.usi.ch/quick-reference/ggplot2/shape 
+
+Review the help pages for scale_y_continuous and scale_x_discrete; replace underscores with spaces, and add a tick mark for each number on the bristol scale (1-7). 
+```{r}
+bristol_plot1 <- bristol_avg_df %>%  
+  ggplot(aes(x= study_week, y = bristol_avg, supplement_consumed)) + 
+  geom_violin() + 
+  geom_jitter
+#anything not included in the group_by is dropped 
+```
+
+### Statistical test 
+Did the BSS increase when participants consumed one of the potato starches? Check assumptions and conduct the appropriate statistical test(s). Include p-values as comments after test(s) and write your conclusion at the end of the code block(s).
+```{r}
+# check assumptions
+```
+
+```{r}
+# statistical test(s)
+```
+
+< conclusion and answer to question> 
+
+### Save results
+```{r}
+# save final data frame
+# save plot
+```
+
+# Extra credit
+[ 2 points ]
+
+You may want to consult with the graphing cheatsheet for this next section. The plot you created above shows the general trend for participants in weeks 1 and 3, however there is no information in that figure that would allow us to determine which data points belong to the same individual across weeks. Use the geom_point and geom_line functions to create a figure where points from the same individual are connected. (Hints: you'll need to include the group argument for these functions, and start with the average BSS data frame). For full credit, adjust appearance of the y-axis to match the previous figure, and remove spaces from any other labels (x-axis or legend). Save plot to figures directory.
+```{r}
+# create plot 
+```
+
+```{r}
+# save plot
+```
