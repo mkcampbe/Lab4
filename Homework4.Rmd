@@ -1,0 +1,140 @@
+---
+title: "Homework 4"
+author: "Kristi Gdanetz MacCready"
+date: "1/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "~/Documents/UMBio201/Lab4/")
+```
+
+# Load packages
+```{r Load packages, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(tidyverse)
+library(readxl)
+library(broom)
+library(cowplot)
+set.seed(7)
+```
+
+# Question 1
+[ 5 points total ]
+
+Complete the writing assignment assigned in lecture on January 24th. Upload to Canvas as Word document.
+
+
+# Question 2
+[ 5 points total ]
+
+### Import 
+Use `HW4_Q2_data.txt` file to determine if there was a change in propionate concentrations for participants who consumed BRMPS 2xdaily. Remember to subset the data frame for quality and relevant measurements, and check all assumptions. Create a plot of the data used, save the final data frame and plot. Answer any questions listed below.
+```{r}
+# import and filter data frame 
+```
+
+What are the dimensions of the data frame?
+
+### Propionate plot 
+```{r}
+# propionate plot
+```
+
+Is there a visual difference in propionate concentrations?
+
+### Statistical test 
+Check assumptions; were any of the assumptions violated? Based on this, which test will you use?
+```{r}
+# check assumptions
+```
+
+What hypotheses are being tested?
+
+< write hypotheses here > 
+
+```{r}
+# conduct statistical test
+
+# What was the p-value of the test? 
+```
+
+### Conclusions 
+
+What are your conclusions; do you accept or reject the null hypothesis?  
+
+< write conclusions here > 
+
+
+Similar analyses for acetate and butyrate were conducted during Lab 3 and HW 3. Consider the figures and results of those analyses in addition to the analysis for propionate just conducted above. Based on the results for each of these short chain fatty acids (SCFAs) was there more microbial fermentation occuring when participants consumed potato starch (BRMPS) twice a day? Explain your answer using the figures and statistical tests as evidence. 
+
+< write answer here > 
+
+### Save results 
+```{r}
+# save final data frame
+# save plot
+```
+
+
+# Question 3
+[ 5 points total ]
+
+### Import 
+Import the `HW4_Q3_data.txt` data file, and name the resulting data frame `q3_df`.
+```{r}
+
+```
+
+### Filter
+Filter for supplement compliance, and participants who consumed potato starches (BRMPS or LOODAT). Name the resulting data frame q3_filtered. Write the dimensions of this data frame in a comment below. 
+```{r}
+
+```
+
+### Mutate
+Use one of the accessor functions from Lab 2 to identify the type (character, double, numeric, etc.) of each column. If necessary use the mutate function to convert Bristol score (BSS) to numeric. Use the group_by and summarise functions determine the average weekly BSS for each participant. Make sure the semester and supplement consumed columns are not dropped. Name this final data frame q3_avg. 
+```{r}
+
+```
+
+### Bristol plot
+Plot the week 1 and week 3 average bristol scores as a jitter plot over top of a violin plot. Modify the arguments to geom_jitter to change the following: color the jitter points based on type of potato starch, change the shape of the jitter points by type of strach, reduce the width of the jitter points so they are concentrated over the violins. 
+
+See this website for color options: http://sape.inf.usi.ch/quick-reference/ggplot2/colour 
+And this site for shape options: http://sape.inf.usi.ch/quick-reference/ggplot2/shape 
+
+Review the help pages for scale_y_continuous and scale_x_discrete; replace underscores with spaces, and add a tick mark for each number on the bristol scale (1-7). 
+```{r}
+
+```
+
+### Statistical test 
+Did the BSS increase when participants consumed one of the potato starches? Check assumptions and conduct the appropriate statistical test(s). Include p-values as comments after test(s) and write your conclusion at the end of the code block(s).
+```{r}
+# check assumptions
+```
+
+```{r}
+# statistical test(s)
+```
+
+< conclusion and answer to question> 
+
+### Save results
+```{r}
+# save final data frame
+# save plot
+```
+
+# Extra credit
+[ 2 points ]
+
+You may want to consult with the graphing cheatsheet for this next section. The plot you created above shows the general trend for participants in weeks 1 and 3, however there is no information in that figure that would allow us to determine which data points belong to the same individual across weeks. Use the geom_point and geom_line functions to create a figure where points from the same individual are connected. (Hints: you'll need to include the group argument for these functions, and start with the average BSS data frame). For full credit, adjust appearance of the y-axis to match the previous figure, and remove spaces from any other labels (x-axis or legend). Save plot to figures directory.
+```{r}
+# create plot 
+```
+
+```{r}
+# save plot
+```
